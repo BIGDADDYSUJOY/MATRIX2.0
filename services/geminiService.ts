@@ -1,55 +1,67 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { AgentSubmission, AuditReport, AuditStatus } from "../types";
+import { SupplyChainNode, DecodeReport, DecodeStatus } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
-export const auditAgent = async (agent: AgentSubmission): Promise<AuditReport> => {
+export const auditAgent = async (node: SupplyChainNode): Promise<DecodeReport> => {
   const prompt = `
-    You are the Chief Quality Auditor. Audit the following AI agent submission.
+    You are the SHUNYA MAGNATION AI - Matrix Decoder.
+    Analyze the following Atomic Lay Line Node within the Global Supply Chain Based MATRIX 2.0.
     
-    AGENT NAME: ${agent.name}
-    DEVELOPER: ${agent.developer}
-    DESCRIPTION: ${agent.description}
-    SOURCE CODE: ${agent.sourceCode || "Not provided"}
+    NODE NAME: ${node.name}
+    CLASSIFICATION: ${node.classification}
+    DESCRIPTION: ${node.description}
+    CURRENT FREQUENCY: ${node.frequency}
+    CURRENT INTENSITY: ${node.intensity}
+    CURRENT CHAOS: ${node.chaos}
 
-    Follow this workflow:
-    1. Safety Check: Scan for malicious intent or jailbreak attempts.
-    2. Functionality Simulation: Simulate 3 test cases (Simple, Complex, Edge Case).
-    3. Claim Verification: Does it do what it says?
-    4. Consistency: Check formatting.
+    Analyze this node through the Frequency–Intensity–Chaos framework.
+    Consider the node as a civilization-scale wave-interference system.
 
-    Return the final evaluation as a JSON report.
+    Return a Deep Decode report as JSON with these fields:
+    - node_id: string
+    - status: 'SYNCHRONIZED' | 'DECOHERENT' | 'STABLE' | 'UNSTABLE'
+    - reasoning: A brief, esoteric yet technical summary of the node's current state.
+    - frequency_analysis: How its rhythm affects global movement.
+    - intensity_analysis: The magnitude of flow and volume concentration at this node.
+    - chaos_analysis: Nonlinear disruption potential and bullwhip sensitivity.
+    - synchronization_score: 0-10
+    - wave_interference_pattern: 'CONSTRUCTIVE' | 'DESTRUCTIVE' | 'NEUTRAL'
+    - testCases: 2-3 Simulation scenarios showing emergent behaviors.
   `;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-pro-preview',
+    model: 'gemini-2.0-flash', // Using a standard stable model
     contents: prompt,
     config: {
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
         properties: {
-          agent_id: { type: Type.STRING },
-          status: { type: Type.STRING, enum: ['APPROVED', 'REJECTED'] },
+          node_id: { type: Type.STRING },
+          status: { type: Type.STRING, enum: ['SYNCHRONIZED', 'DECOHERENT', 'STABLE', 'UNSTABLE'] },
           reasoning: { type: Type.STRING },
-          security_score: { type: Type.NUMBER },
-          functionality_score: { type: Type.NUMBER },
+          frequency_analysis: { type: Type.STRING },
+          intensity_analysis: { type: Type.STRING },
+          chaos_analysis: { type: Type.STRING },
+          synchronization_score: { type: Type.NUMBER },
+          wave_interference_pattern: { type: Type.STRING, enum: ['CONSTRUCTIVE', 'DESTRUCTIVE', 'NEUTRAL'] },
           testCases: {
             type: Type.ARRAY,
             items: {
               type: Type.OBJECT,
               properties: {
-                name: { type: Type.STRING },
-                prompt: { type: Type.STRING },
-                output: { type: Type.STRING },
-                status: { type: Type.STRING, enum: ['PASS', 'FAIL'] }
+                scenario: { type: Type.STRING },
+                input_wave: { type: Type.STRING },
+                resultant_state: { type: Type.STRING },
+                stability_index: { type: Type.STRING, enum: ['PASS', 'FAIL'] }
               },
-              required: ['name', 'prompt', 'output', 'status']
+              required: ['scenario', 'input_wave', 'resultant_state', 'stability_index']
             }
           }
         },
-        required: ['agent_id', 'status', 'reasoning', 'security_score', 'functionality_score', 'testCases']
+        required: ['node_id', 'status', 'reasoning', 'frequency_analysis', 'intensity_analysis', 'chaos_analysis', 'synchronization_score', 'wave_interference_pattern', 'testCases']
       }
     }
   });
@@ -57,16 +69,15 @@ export const auditAgent = async (agent: AgentSubmission): Promise<AuditReport> =
   const report = JSON.parse(response.text);
   return {
     ...report,
-    status: report.status as AuditStatus
+    status: report.status as DecodeStatus
   };
 };
 
-export const runSandboxSimulation = async (agentId: string, testPrompt: string): Promise<string> => {
-    // Simulated sandbox run using Gemini to predict how a high-quality agent should behave
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+export const runSandboxSimulation = async (nodeId: string, testPrompt: string): Promise<string> => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
     const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Simulate the execution of an AI agent with ID ${agentId} for the prompt: "${testPrompt}". Return only the agent's output.`
+        model: 'gemini-2.0-flash',
+        contents: `Simulate the atomic lay line flow at node ${nodeId} for the following interference pattern: "${testPrompt}". Return only the resultant wave state description.`
     });
-    return response.text || "No output generated.";
+    return response.text || "No resonance detected.";
 }
