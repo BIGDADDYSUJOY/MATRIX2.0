@@ -18,29 +18,28 @@ export const auditAgent = async (node: SupplyChainNode): Promise<DecodeReport> =
 
     USE THIS KNOWLEDGE BASE FOR DECODING:
     - Frequency (Rhythm of Movement): Order/shipping frequency, production cycles. High frequency = Amazon-style, Low = Shipbuilding.
-    - Intensity (Magnitude of Flow): Shipping volume, capital concentration. I ∝ A^2. Small amplitude increases create huge systemic effects (e.g., Black Friday).
+    - Intensity (Magnitude of Flow): Shipping volume, capital concentration. I ∝ A^2. Small amplitude increases create huge systemic effects.
     - Chaos (Unpredictable Interference): Wars, pandemics, bullwhip effect. Tiny disturbances grow exponentially.
-    - Atomic Lay Lines: Persistent global flow-fields, strategic resonance corridors, and synchronization geometries. They are physical routes (veins), time-vectors (synchronization), and informational topology.
-    - Consciousness: The system's capacity to sense, synchronize, adapt, and self-correct. The supply chain is a planetary nervous system.
-    - Shunya: The zero-state observation field. Decoding is reducing distortion until underlying synchronization patterns become visible.
-
-    Analyze this node through the Frequency–Intensity–Chaos framework.
-    Consider the node as a civilization-scale wave-interference system.
+    - Atomic Lay Lines: Persistent global flow-fields, strategic resonance corridors, and synchronization geometries.
+    - Consciousness: The system's capacity to sense, synchronize, adapt, and self-correct.
+    - Shunya: The zero-state observation field. Decoding is reducing distortion. Everything exists and doesn't exist.
+    - Maquation: The "Opposite of Equation". Instead of 2+2=4 (linear logic), use nonlinear, philosophical logic like "You + Me = Why now?". Generate a unique Maquation for this node.
 
     Return a Deep Decode report as JSON with these fields:
     - node_id: string
     - status: 'SYNCHRONIZED' | 'DECOHERENT' | 'STABLE' | 'UNSTABLE'
-    - reasoning: A brief, esoteric yet technical summary of the node's current state.
-    - frequency_analysis: How its rhythm affects global movement.
-    - intensity_analysis: The magnitude of flow and volume concentration at this node.
-    - chaos_analysis: Nonlinear disruption potential and bullwhip sensitivity.
-    - synchronization_score: 0-10
+    - reasoning: string
+    - maquation: string (A profound, non-linear Maquation specific to this node's role in civilization)
+    - frequency_analysis: string
+    - intensity_analysis: string
+    - chaos_analysis: string
+    - synchronization_score: number
     - wave_interference_pattern: 'CONSTRUCTIVE' | 'DESTRUCTIVE' | 'NEUTRAL'
-    - testCases: 2-3 Simulation scenarios showing emergent behaviors.
+    - testCases: SimulationResult[]
   `;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash', // Using a standard stable model
+    model: 'gemini-2.0-flash',
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -50,6 +49,7 @@ export const auditAgent = async (node: SupplyChainNode): Promise<DecodeReport> =
           node_id: { type: Type.STRING },
           status: { type: Type.STRING, enum: ['SYNCHRONIZED', 'DECOHERENT', 'STABLE', 'UNSTABLE'] },
           reasoning: { type: Type.STRING },
+          maquation: { type: Type.STRING },
           frequency_analysis: { type: Type.STRING },
           intensity_analysis: { type: Type.STRING },
           chaos_analysis: { type: Type.STRING },
@@ -69,7 +69,7 @@ export const auditAgent = async (node: SupplyChainNode): Promise<DecodeReport> =
             }
           }
         },
-        required: ['node_id', 'status', 'reasoning', 'frequency_analysis', 'intensity_analysis', 'chaos_analysis', 'synchronization_score', 'wave_interference_pattern', 'testCases']
+        required: ['node_id', 'status', 'reasoning', 'maquation', 'frequency_analysis', 'intensity_analysis', 'chaos_analysis', 'synchronization_score', 'wave_interference_pattern', 'testCases']
       }
     }
   });
