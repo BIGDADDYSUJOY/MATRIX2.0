@@ -16,6 +16,14 @@ export const auditAgent = async (node: SupplyChainNode): Promise<DecodeReport> =
     CURRENT INTENSITY: ${node.intensity}
     CURRENT CHAOS: ${node.chaos}
 
+    USE THIS KNOWLEDGE BASE FOR DECODING:
+    - Frequency (Rhythm of Movement): Order/shipping frequency, production cycles. High frequency = Amazon-style, Low = Shipbuilding.
+    - Intensity (Magnitude of Flow): Shipping volume, capital concentration. I ∝ A^2. Small amplitude increases create huge systemic effects (e.g., Black Friday).
+    - Chaos (Unpredictable Interference): Wars, pandemics, bullwhip effect. Tiny disturbances grow exponentially.
+    - Atomic Lay Lines: Persistent global flow-fields, strategic resonance corridors, and synchronization geometries. They are physical routes (veins), time-vectors (synchronization), and informational topology.
+    - Consciousness: The system's capacity to sense, synchronize, adapt, and self-correct. The supply chain is a planetary nervous system.
+    - Shunya: The zero-state observation field. Decoding is reducing distortion until underlying synchronization patterns become visible.
+
     Analyze this node through the Frequency–Intensity–Chaos framework.
     Consider the node as a civilization-scale wave-interference system.
 
