@@ -1,42 +1,70 @@
 
 import React from 'react';
-import { AgentSubmission, AuditStatus } from '../types';
+import { SupplyChainNode, DecodeStatus } from '../types';
 
 interface AuditCardProps {
-  agent: AgentSubmission;
+  agent: SupplyChainNode;
   onClick: () => void;
-  status: AuditStatus;
+  status: DecodeStatus | 'PENDING';
 }
 
 const AuditCard: React.FC<AuditCardProps> = ({ agent, onClick, status }) => {
   const statusColors = {
-    [AuditStatus.PENDING]: 'bg-gray-800 text-gray-400 border-gray-700',
-    [AuditStatus.IN_PROGRESS]: 'bg-blue-900/30 text-blue-400 border-blue-500/50',
-    [AuditStatus.APPROVED]: 'bg-green-900/30 text-green-400 border-green-500/50',
-    [AuditStatus.REJECTED]: 'bg-red-900/30 text-red-400 border-red-500/50',
+    ['PENDING']: 'bg-zinc-900/50 text-zinc-500 border-white/5',
+    [DecodeStatus.SYNCHRONIZED]: 'bg-blue-900/10 text-blue-400 border-blue-500/30 glow-blue',
+    [DecodeStatus.DECOHERENT]: 'bg-red-900/10 text-red-400 border-red-500/30 glow-red',
+    [DecodeStatus.STABLE]: 'bg-emerald-900/10 text-emerald-400 border-emerald-500/30',
+    [DecodeStatus.UNSTABLE]: 'bg-orange-900/10 text-orange-400 border-orange-500/30',
   };
 
   return (
     <div 
       onClick={onClick}
-      className={`glass p-5 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] ${statusColors[status]}`}
+      className={`glass p-6 rounded-2xl border transition-all cursor-pointer hover:border-white/20 group relative overflow-hidden ${statusColors[status]}`}
     >
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <h3 className="text-lg font-bold text-white">{agent.name}</h3>
-          <p className="text-xs opacity-70">Dev: {agent.developer}</p>
-        </div>
-        <span className="text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded border border-current">
-          {status}
-        </span>
+      <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-30 transition-opacity">
+        <div className="w-12 h-12 border-t border-r border-current rounded-tr-lg"></div>
       </div>
-      <p className="text-sm line-clamp-2 text-gray-300 mb-4 h-10">
+
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <div className="text-[10px] font-mono opacity-50 uppercase tracking-widest mb-1">{agent.classification}</div>
+          <h3 className="text-xl font-bold text-white tracking-tight group-hover:text-blue-400 transition-colors">{agent.name}</h3>
+        </div>
+        <div className="flex flex-col items-end">
+          <span className="text-[9px] uppercase tracking-[0.2em] font-black px-2 py-1 rounded border border-current mb-2">
+            {status}
+          </span>
+          <span className="text-[9px] font-mono opacity-40 uppercase">{agent.type}</span>
+        </div>
+      </div>
+
+      <p className="text-sm line-clamp-3 text-gray-400 mb-6 font-medium leading-relaxed">
         {agent.description}
       </p>
-      <div className="flex items-center gap-3 text-[10px] font-mono opacity-60">
-        <span>ID: {agent.id}</span>
-        <span>•</span>
-        <span>{agent.type}</span>
+
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-black/40 p-2 rounded-lg border border-white/5 text-center">
+            <p className="text-[8px] uppercase text-gray-600 font-bold mb-1">Freq</p>
+            <p className="text-xs font-mono">{(agent.frequency * 100).toFixed(0)}%</p>
+        </div>
+        <div className="bg-black/40 p-2 rounded-lg border border-white/5 text-center">
+            <p className="text-[8px] uppercase text-gray-600 font-bold mb-1">Int</p>
+            <p className="text-xs font-mono">{(agent.intensity * 100).toFixed(0)}%</p>
+        </div>
+        <div className="bg-black/40 p-2 rounded-lg border border-white/5 text-center">
+            <p className="text-[8px] uppercase text-gray-600 font-bold mb-1">Chaos</p>
+            <p className="text-xs font-mono">{(agent.chaos * 100).toFixed(0)}%</p>
+        </div>
+      </div>
+
+      <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+        <span className="text-[9px] font-mono text-gray-600">ID: {agent.id}</span>
+        <div className="flex gap-1">
+            <div className="w-1 h-1 rounded-full bg-blue-500/50 animate-pulse"></div>
+            <div className="w-1 h-1 rounded-full bg-blue-500/50 animate-pulse delay-75"></div>
+            <div className="w-1 h-1 rounded-full bg-blue-500/50 animate-pulse delay-150"></div>
+        </div>
       </div>
     </div>
   );

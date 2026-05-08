@@ -1,33 +1,54 @@
 
-export enum AuditStatus {
-  PENDING = 'PENDING',
-  IN_PROGRESS = 'IN_PROGRESS',
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED'
+export enum DecodeStatus {
+  SYNCHRONIZED = 'SYNCHRONIZED',
+  DECOHERENT = 'DECOHERENT',
+  STABLE = 'STABLE',
+  UNSTABLE = 'UNSTABLE'
 }
 
-export interface AgentSubmission {
+export type NodeType = 'PHYSICAL' | 'INFORMATIONAL' | 'TEMPORAL' | 'ATOMIC';
+
+export interface SupplyChainNode {
   id: string;
   name: string;
-  developer: string;
+  classification: string;
   description: string;
-  type: 'PROMPT' | 'API';
-  submittedAt: string;
-  sourceCode?: string;
+  type: NodeType;
+  lastSynchronization: string;
+  coordinates: { x: number; y: number };
+  frequency: number;
+  intensity: number;
+  chaos: number;
 }
 
-export interface AuditReport {
-  agent_id: string;
-  status: AuditStatus;
+export interface DecodeReport {
+  node_id: string;
+  status: DecodeStatus;
   reasoning: string;
-  security_score: number;
-  functionality_score: number;
-  testCases: TestCaseResult[];
+  frequency_analysis: string;
+  intensity_analysis: string;
+  chaos_analysis: string;
+  synchronization_score: number;
+  wave_interference_pattern: 'CONSTRUCTIVE' | 'DESTRUCTIVE' | 'NEUTRAL';
+  testCases: SimulationResult[];
 }
 
-export interface TestCaseResult {
-  name: string;
-  prompt: string;
-  output: string;
-  status: 'PASS' | 'FAIL';
+export interface SimulationResult {
+  scenario: string;
+  input_wave: string;
+  resultant_state: string;
+  stability_index: 'PASS' | 'FAIL';
+}
+
+export interface WaveState {
+  targetFrequency: number;
+  targetIntensity: number;
+  chaos: number;
+  variation: number;
+  currentFrequency: number;
+  currentIntensity: number;
+  phase: number;
+  cycles: number;
+  runtime: number;
+  mode: 'Traveling' | 'Standing';
 }
