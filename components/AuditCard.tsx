@@ -4,22 +4,28 @@ import { SupplyChainNode, DecodeStatus } from '../types';
 
 interface AuditCardProps {
   agent: SupplyChainNode;
-  onClick: () => void;
+  onSelect: (id: string) => void;
   status: DecodeStatus | 'PENDING';
 }
 
-const AuditCard: React.FC<AuditCardProps> = ({ agent, onClick, status }) => {
-  const statusColors = {
-    ['PENDING']: 'bg-zinc-900/50 text-zinc-500 border-white/5',
-    [DecodeStatus.SYNCHRONIZED]: 'bg-blue-900/10 text-blue-400 border-blue-500/30 glow-blue',
-    [DecodeStatus.DECOHERENT]: 'bg-red-900/10 text-red-400 border-red-500/30 glow-red',
-    [DecodeStatus.STABLE]: 'bg-emerald-900/10 text-emerald-400 border-emerald-500/30',
-    [DecodeStatus.UNSTABLE]: 'bg-orange-900/10 text-orange-400 border-orange-500/30',
-  };
+// BOLT OPTIMIZATION: Move static mapping outside component to avoid recreation on every render.
+const statusColors = {
+  ['PENDING']: 'bg-zinc-900/50 text-zinc-500 border-white/5',
+  [DecodeStatus.SYNCHRONIZED]: 'bg-blue-900/10 text-blue-400 border-blue-500/30 glow-blue',
+  [DecodeStatus.DECOHERENT]: 'bg-red-900/10 text-red-400 border-red-500/30 glow-red',
+  [DecodeStatus.STABLE]: 'bg-emerald-900/10 text-emerald-400 border-emerald-500/30',
+  [DecodeStatus.UNSTABLE]: 'bg-orange-900/10 text-orange-400 border-orange-500/30',
+};
+
+// BOLT OPTIMIZATION: Wrap with React.memo to prevent unnecessary re-renders.
+const AuditCard: React.FC<AuditCardProps> = React.memo(({ agent, onSelect, status }) => {
+  const handleClick = React.useCallback(() => {
+    onSelect(agent.id);
+  }, [agent.id, onSelect]);
 
   return (
     <div 
-      onClick={onClick}
+      onClick={handleClick}
       className={`glass p-6 rounded-2xl border transition-all cursor-pointer hover:border-white/20 group relative overflow-hidden ${statusColors[status]}`}
     >
       <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-30 transition-opacity">
@@ -68,6 +74,6 @@ const AuditCard: React.FC<AuditCardProps> = ({ agent, onClick, status }) => {
       </div>
     </div>
   );
-};
+});
 
 export default AuditCard;

@@ -8,6 +8,13 @@ interface WaveEngineProps {
 
 const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // BOLT OPTIMIZATION: Use ref to bridge props to animation loop.
+  // This avoids re-initializing the entire canvas and animation loop on every state update.
+  const waveStateRef = useRef(waveState);
+
+  useEffect(() => {
+    waveStateRef.current = waveState;
+  }, [waveState]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -29,7 +36,7 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const { targetFrequency, targetIntensity, chaos, phase, mode } = waveState;
+      const { targetFrequency, targetIntensity, chaos, phase, mode } = waveStateRef.current;
       const currentFrequency = targetFrequency; // Smooth transition could be added later
       const currentIntensity = targetIntensity;
       const centerY = canvas.height / 2;
@@ -52,6 +59,14 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
         ctx.stroke();
       }
 
+      // BOLT OPTIMIZATION: Hoist calculations out of the hot loop to reduce CPU overhead per frame.
+      const freqMultiplier = Math.PI * 10 * currentFrequency;
+      const intensityMultiplier = currentIntensity * 100;
+      const timePhase = time + phase;
+      const standingWaveFactor = mode === 'Standing' ? Math.cos(timePhase) : 0;
+      const chaosMultiplier = chaos * 50;
+      const time2 = time * 2;
+
       // Draw Wave
       ctx.beginPath();
       ctx.strokeStyle = '#3b82f6';
@@ -61,17 +76,18 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
 
       for (let x = 0; x < width; x++) {
         const normalizedX = x / width;
+        const waveX = normalizedX * freqMultiplier;
         let y = 0;
 
         if (mode === 'Traveling') {
-          y = Math.sin(normalizedX * Math.PI * 10 * currentFrequency + time + phase) * (currentIntensity * 100);
+          y = Math.sin(waveX + timePhase) * intensityMultiplier;
         } else {
           // Standing Wave
-          y = Math.sin(normalizedX * Math.PI * 10 * currentFrequency) * Math.cos(time + phase) * (currentIntensity * 100);
+          y = Math.sin(waveX) * standingWaveFactor * intensityMultiplier;
         }
 
         // Add Chaos
-        const chaosFactor = Math.sin(time * 2 + normalizedX * 20) * chaos * 50;
+        const chaosFactor = Math.sin(time2 + normalizedX * 20) * chaosMultiplier;
         y += chaosFactor;
 
         if (x === 0) ctx.moveTo(x, centerY + y);
@@ -83,11 +99,14 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       // Draw Particles (Consciousness Particles)
       const particleCount = 2;
       const colors = ['#ef4444', '#22c55e'];
+      const time100 = time * 100;
+      const halfWidth = width / 2;
+
       for (let i = 0; i < particleCount; i++) {
-        const px = (time * 100 + i * width / 2) % width;
+        const px = (time100 + i * halfWidth) % width;
         const pNormalizedX = px / width;
-        let py = Math.sin(pNormalizedX * Math.PI * 10 * currentFrequency + time + phase) * (currentIntensity * 100);
-        const pChaos = Math.sin(time * 2 + pNormalizedX * 20) * chaos * 50;
+        let py = Math.sin(pNormalizedX * freqMultiplier + timePhase) * intensityMultiplier;
+        const pChaos = Math.sin(time2 + pNormalizedX * 20) * chaosMultiplier;
         py += pChaos;
 
         ctx.fillStyle = colors[i % colors.length];
@@ -125,7 +144,7 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       // UI Text
       ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx.font = '10px monospace';
-      ctx.fillText(`Phase: ${waveState.phase.toFixed(2)} rad`, dialX - 40, dialY + dialRadius + 20);
+      ctx.fillText(`Phase: ${waveStateRef.current.phase.toFixed(2)} rad`, dialX - 40, dialY + dialRadius + 20);
 
       time += 0.05;
       animationId = requestAnimationFrame(draw);
@@ -137,7 +156,7 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       cancelAnimationFrame(animationId);
       window.removeEventListener('resize', resize);
     };
-  }, [waveState]);
+  }, []); // BOLT OPTIMIZATION: Stable dependency array to prevent effect restarts.
 
   return (
     <canvas

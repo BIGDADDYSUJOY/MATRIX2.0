@@ -1,0 +1,3 @@
+## 2025-03-03 - High-frequency animation and re-render optimization
+**Learning:** In React applications with high-frequency state updates (like a 60fps wave simulation), preventing redundant component re-renders and expensive effect restarts is critical for performance. Using `useRef` to bridge props to high-frequency loops (like Canvas `requestAnimationFrame`) avoids clearing the canvas buffer and re-binding listeners on every state change. Hoisting mathematical constants out of hot rendering loops further reduces per-frame CPU load.
+**Action:** Use `useRef` for data access in animation loops and `React.memo` + `useCallback` for stable component trees.
