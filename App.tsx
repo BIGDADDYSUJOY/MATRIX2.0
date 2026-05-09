@@ -97,9 +97,18 @@ const App: React.FC = () => {
     nodes.find(n => n.id === selectedNodeId) || null,
   [nodes, selectedNodeId]);
 
-  const handleDecodeComplete = (report: DecodeReport) => {
+  // BOLT OPTIMIZATION: Memoize callbacks to prevent unnecessary re-renders of memoized child components.
+  const handleDecodeComplete = React.useCallback((report: DecodeReport) => {
     setDecodeReports(prev => ({ ...prev, [report.node_id]: report }));
-  };
+  }, []);
+
+  const handleSelectNode = React.useCallback((id: string) => {
+    setSelectedNodeId(id);
+  }, []);
+
+  const handleCloseDetail = React.useCallback(() => {
+    setSelectedNodeId(null);
+  }, []);
 
   // Keyboard controls for wave state
   useEffect(() => {
@@ -254,7 +263,7 @@ const App: React.FC = () => {
               key={node.id}
               agent={node}
               status={decodeReports[node.id]?.status || 'PENDING'}
-              onClick={() => setSelectedNodeId(node.id)}
+              onSelect={handleSelectNode}
             />
           ))
         ) : (
@@ -269,7 +278,7 @@ const App: React.FC = () => {
           agent={selectedNode}
           report={decodeReports[selectedNode.id] || null}
           onAuditComplete={handleDecodeComplete}
-          onClose={() => setSelectedNodeId(null)}
+          onClose={handleCloseDetail}
         />
       )}
 
