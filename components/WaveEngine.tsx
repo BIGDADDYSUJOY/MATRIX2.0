@@ -8,6 +8,12 @@ interface WaveEngineProps {
 
 const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const waveStateRef = useRef(waveState);
+
+  // Update ref whenever waveState changes to avoid re-triggering the main loop
+  useEffect(() => {
+    waveStateRef.current = waveState;
+  }, [waveState]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -19,21 +25,23 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
     let time = 0;
 
     const resize = () => {
-      canvas.width = canvas.parentElement?.clientWidth || 800;
-      canvas.height = canvas.parentElement?.clientHeight || 300;
+      canvas.width = (canvas.parentElement?.clientWidth || 800) * window.devicePixelRatio;
+      canvas.height = (canvas.parentElement?.clientHeight || 300) * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
     };
 
     window.addEventListener('resize', resize);
     resize();
 
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const width = canvas.width / window.devicePixelRatio;
+      const height = canvas.height / window.devicePixelRatio;
+      ctx.clearRect(0, 0, width, height);
 
-      const { targetFrequency, targetIntensity, chaos, phase, mode } = waveState;
-      const currentFrequency = targetFrequency; // Smooth transition could be added later
+      const { targetFrequency, targetIntensity, chaos, phase, mode } = waveStateRef.current;
+      const currentFrequency = targetFrequency;
       const currentIntensity = targetIntensity;
-      const centerY = canvas.height / 2;
-      const width = canvas.width;
+      const centerY = height / 2;
 
       // Draw Grid
       ctx.strokeStyle = 'rgba(59, 130, 246, 0.05)';
@@ -42,10 +50,10 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       for (let x = 0; x < width; x += gridSize) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
+        ctx.lineTo(x, height);
         ctx.stroke();
       }
-      for (let y = 0; y < canvas.height; y += gridSize) {
+      for (let y = 0; y < height; y += gridSize) {
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(width, y);
@@ -137,7 +145,7 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       cancelAnimationFrame(animationId);
       window.removeEventListener('resize', resize);
     };
-  }, [waveState]);
+  }, []); // Empty dependency array means this loop runs once and uses waveStateRef
 
   return (
     <canvas
