@@ -8,6 +8,12 @@ interface WaveEngineProps {
 
 const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const waveStateRef = useRef(waveState);
+
+  // Keep waveStateRef in sync without restarting the animation loop
+  useEffect(() => {
+    waveStateRef.current = waveState;
+  }, [waveState]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -19,36 +25,53 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
     let time = 0;
 
     const resize = () => {
-      canvas.width = canvas.parentElement?.clientWidth || 800;
-      canvas.height = canvas.parentElement?.clientHeight || 300;
+      // ⚡ Bolt: HiDPI Canvas Scaling
+      const dpr = window.devicePixelRatio || 1;
+      const displayWidth = canvas.parentElement?.clientWidth || 800;
+      const displayHeight = canvas.parentElement?.clientHeight || 300;
+
+      canvas.width = displayWidth * dpr;
+      canvas.height = displayHeight * dpr;
+      canvas.style.width = `${displayWidth}px`;
+      canvas.style.height = `${displayHeight}px`;
+
+      ctx.scale(dpr, dpr);
     };
 
     window.addEventListener('resize', resize);
     resize();
 
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const displayWidth = canvas.width / (window.devicePixelRatio || 1);
+      const displayHeight = canvas.height / (window.devicePixelRatio || 1);
 
-      const { targetFrequency, targetIntensity, chaos, phase, mode } = waveState;
-      const currentFrequency = targetFrequency; // Smooth transition could be added later
-      const currentIntensity = targetIntensity;
-      const centerY = canvas.height / 2;
-      const width = canvas.width;
+      ctx.clearRect(0, 0, displayWidth, displayHeight);
+
+      // Read from ref to avoid loop restarts on state change
+      const { targetFrequency, targetIntensity, chaos, phase, mode } = waveStateRef.current;
+
+      // ⚡ Bolt: Pre-calculate constants to reduce operations in pixel loop
+      const freqFactor = Math.PI * 10 * targetFrequency;
+      const ampFactor = targetIntensity * 100;
+      const chaosAmp = chaos * 50;
+      const standingWaveTimeFactor = Math.cos(time + phase);
+
+      const centerY = displayHeight / 2;
 
       // Draw Grid
       ctx.strokeStyle = 'rgba(59, 130, 246, 0.05)';
       ctx.lineWidth = 1;
       const gridSize = 40;
-      for (let x = 0; x < width; x += gridSize) {
+      for (let x = 0; x < displayWidth; x += gridSize) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
+        ctx.lineTo(x, displayHeight);
         ctx.stroke();
       }
-      for (let y = 0; y < canvas.height; y += gridSize) {
+      for (let y = 0; y < displayHeight; y += gridSize) {
         ctx.beginPath();
         ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
+        ctx.lineTo(displayWidth, y);
         ctx.stroke();
       }
 
@@ -59,20 +82,20 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       ctx.shadowBlur = 15;
       ctx.shadowColor = 'rgba(59, 130, 246, 0.5)';
 
-      for (let x = 0; x < width; x++) {
-        const normalizedX = x / width;
+      for (let x = 0; x < displayWidth; x++) {
+        const normalizedX = x / displayWidth;
+        const waveX = normalizedX * freqFactor;
         let y = 0;
 
         if (mode === 'Traveling') {
-          y = Math.sin(normalizedX * Math.PI * 10 * currentFrequency + time + phase) * (currentIntensity * 100);
+          y = Math.sin(waveX + time + phase) * ampFactor;
         } else {
           // Standing Wave
-          y = Math.sin(normalizedX * Math.PI * 10 * currentFrequency) * Math.cos(time + phase) * (currentIntensity * 100);
+          y = Math.sin(waveX) * standingWaveTimeFactor * ampFactor;
         }
 
         // Add Chaos
-        const chaosFactor = Math.sin(time * 2 + normalizedX * 20) * chaos * 50;
-        y += chaosFactor;
+        y += Math.sin(time * 2 + normalizedX * 20) * chaosAmp;
 
         if (x === 0) ctx.moveTo(x, centerY + y);
         else ctx.lineTo(x, centerY + y);
@@ -84,11 +107,11 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       const particleCount = 2;
       const colors = ['#ef4444', '#22c55e'];
       for (let i = 0; i < particleCount; i++) {
-        const px = (time * 100 + i * width / 2) % width;
-        const pNormalizedX = px / width;
-        let py = Math.sin(pNormalizedX * Math.PI * 10 * currentFrequency + time + phase) * (currentIntensity * 100);
-        const pChaos = Math.sin(time * 2 + pNormalizedX * 20) * chaos * 50;
-        py += pChaos;
+        const px = (time * 100 + i * displayWidth / 2) % displayWidth;
+        const pNormalizedX = px / displayWidth;
+        const pWaveX = pNormalizedX * freqFactor;
+        let py = Math.sin(pWaveX + time + phase) * ampFactor;
+        py += Math.sin(time * 2 + pNormalizedX * 20) * chaosAmp;
 
         ctx.fillStyle = colors[i % colors.length];
         ctx.beginPath();
@@ -102,7 +125,7 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       }
 
       // Draw Phase Dial (Top Right)
-      const dialX = width - 80;
+      const dialX = displayWidth - 80;
       const dialY = 60;
       const dialRadius = 30;
 
@@ -125,7 +148,7 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       // UI Text
       ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx.font = '10px monospace';
-      ctx.fillText(`Phase: ${waveState.phase.toFixed(2)} rad`, dialX - 40, dialY + dialRadius + 20);
+      ctx.fillText(`Phase: ${waveStateRef.current.phase.toFixed(2)} rad`, dialX - 40, dialY + dialRadius + 20);
 
       time += 0.05;
       animationId = requestAnimationFrame(draw);
@@ -137,7 +160,7 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       cancelAnimationFrame(animationId);
       window.removeEventListener('resize', resize);
     };
-  }, [waveState]);
+  }, []); // Empty dependency array means this effect runs once on mount
 
   return (
     <canvas
