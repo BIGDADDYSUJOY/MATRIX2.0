@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { SupplyChainNode, DecodeReport, DecodeStatus, WaveState } from './types';
 import AuditCard from './components/AuditCard';
 import AuditDetail from './components/AuditDetail';
@@ -97,9 +97,14 @@ const App: React.FC = () => {
     nodes.find(n => n.id === selectedNodeId) || null,
   [nodes, selectedNodeId]);
 
-  const handleDecodeComplete = (report: DecodeReport) => {
+  // BOLT OPTIMIZATION: Memoize callback to prevent unnecessary re-renders of child components
+  const handleSelectNode = useCallback((id: string) => {
+    setSelectedNodeId(id);
+  }, []);
+
+  const handleDecodeComplete = useCallback((report: DecodeReport) => {
     setDecodeReports(prev => ({ ...prev, [report.node_id]: report }));
-  };
+  }, []);
 
   // Keyboard controls for wave state
   useEffect(() => {
@@ -254,7 +259,7 @@ const App: React.FC = () => {
               key={node.id}
               agent={node}
               status={decodeReports[node.id]?.status || 'PENDING'}
-              onClick={() => setSelectedNodeId(node.id)}
+              onClick={handleSelectNode}
             />
           ))
         ) : (
