@@ -97,6 +97,10 @@ const App: React.FC = () => {
     nodes.find(n => n.id === selectedNodeId) || null,
   [nodes, selectedNodeId]);
 
+  const handleNodeClick = React.useCallback((id: string) => {
+    setSelectedNodeId(id);
+  }, []);
+
   const handleDecodeComplete = (report: DecodeReport) => {
     setDecodeReports(prev => ({ ...prev, [report.node_id]: report }));
   };
@@ -254,7 +258,7 @@ const App: React.FC = () => {
               key={node.id}
               agent={node}
               status={decodeReports[node.id]?.status || 'PENDING'}
-              onClick={() => setSelectedNodeId(node.id)}
+              onNodeClick={handleNodeClick}
             />
           ))
         ) : (
