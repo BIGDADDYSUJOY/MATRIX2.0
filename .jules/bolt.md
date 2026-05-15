@@ -1,0 +1,3 @@
+## 2026-05-15 - [Canvas Animation Loop Optimization]
+**Learning:** React state updates in high-frequency animation loops (like Canvas) cause expensive effect cleanup and re-initialization if the state is in the effect's dependency array. Bridging the state to a `useRef` allows the animation loop to run continuously while still accessing the latest state values, significantly improving frame stability and reducing CPU usage.
+**Action:** Always use `useRef` to bridge interactive state into continuous `requestAnimationFrame` loops in React components to avoid unnecessary effect lifecycle overhead.
