@@ -1,0 +1,3 @@
+## 2025-05-14 - Canvas Render Loop Anti-Patterns
+**Learning:** Calling `getBoundingClientRect()` or other layout-triggering properties inside a `requestAnimationFrame` loop causes synchronous layout thrashing (reflow), which significantly degrades performance, especially in interactive components. Additionally, when implementing HiDPI scaling, it's crucial to ensure all UI elements (text, dials, etc.) are positioned using logical coordinates on a scaled context to avoid misalignments.
+**Action:** Always cache canvas dimensions and `devicePixelRatio` in a `useRef` during resize events and use those cached values within the `draw` loop to maintain high performance. Ensure the context is scaled once and all subsequent drawing uses logical units.
