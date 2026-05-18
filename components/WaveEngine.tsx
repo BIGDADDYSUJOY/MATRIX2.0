@@ -6,8 +6,27 @@ interface WaveEngineProps {
   waveState: WaveState;
 }
 
+/**
+ * WaveEngine: High-performance canvas renderer for SHUNYA wave dynamics.
+ *
+ * OPTIMIZATIONS:
+ * 1. Prop-to-Ref Bridging: Uses a ref for waveState to avoid expensive useEffect
+ *    cleanup/restart cycles on every prop change.
+ * 2. HiDPI Scaling: Automatically adjusts for window.devicePixelRatio to maintain
+ *    crisp rendering on Retina displays.
+ * 3. Batch Drawing: Grid lines are batched into a single path to reduce draw calls.
+ * 4. Pre-calculation: Mathematical constants are calculated once per frame outside
+ *    the pixel-iteration loops.
+ */
 const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const stateRef = useRef(waveState);
+  const dimensionsRef = useRef({ width: 0, height: 0, dpr: 1 });
+
+  // Keep stateRef in sync without triggering effects
+  useEffect(() => {
+    stateRef.current = waveState;
+  }, [waveState]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -19,38 +38,51 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
     let time = 0;
 
     const resize = () => {
-      canvas.width = canvas.parentElement?.clientWidth || 800;
-      canvas.height = canvas.parentElement?.clientHeight || 300;
+      const dpr = window.devicePixelRatio || 1;
+      const width = canvas.parentElement?.clientWidth || 800;
+      const height = canvas.parentElement?.clientHeight || 300;
+
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+
+      // Reset transform before scaling to avoid cumulative effects
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+
+      dimensionsRef.current = { width, height, dpr };
     };
 
     window.addEventListener('resize', resize);
     resize();
 
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const { width, height } = dimensionsRef.current;
+      const { targetFrequency, targetIntensity, chaos, phase, mode } = stateRef.current;
 
-      const { targetFrequency, targetIntensity, chaos, phase, mode } = waveState;
-      const currentFrequency = targetFrequency; // Smooth transition could be added later
-      const currentIntensity = targetIntensity;
-      const centerY = canvas.height / 2;
-      const width = canvas.width;
+      ctx.clearRect(0, 0, width, height);
 
-      // Draw Grid
+      const centerY = height / 2;
+      const gridSize = 40;
+
+      // OPTIMIZATION: Batched Grid Rendering
       ctx.strokeStyle = 'rgba(59, 130, 246, 0.05)';
       ctx.lineWidth = 1;
-      const gridSize = 40;
+      ctx.beginPath();
       for (let x = 0; x < width; x += gridSize) {
-        ctx.beginPath();
         ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-        ctx.stroke();
+        ctx.lineTo(x, height);
       }
-      for (let y = 0; y < canvas.height; y += gridSize) {
-        ctx.beginPath();
+      for (let y = 0; y < height; y += gridSize) {
         ctx.moveTo(0, y);
         ctx.lineTo(width, y);
-        ctx.stroke();
       }
+      ctx.stroke();
+
+      // OPTIMIZATION: Pre-calculate constants outside loop
+      const freqFactor = Math.PI * 10 * targetFrequency;
+      const intensityPixels = targetIntensity * 100;
+      const chaosAmplitude = chaos * 50;
+      const time2 = time * 2;
 
       // Draw Wave
       ctx.beginPath();
@@ -64,14 +96,14 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
         let y = 0;
 
         if (mode === 'Traveling') {
-          y = Math.sin(normalizedX * Math.PI * 10 * currentFrequency + time + phase) * (currentIntensity * 100);
+          y = Math.sin(normalizedX * freqFactor + time + phase) * intensityPixels;
         } else {
           // Standing Wave
-          y = Math.sin(normalizedX * Math.PI * 10 * currentFrequency) * Math.cos(time + phase) * (currentIntensity * 100);
+          y = Math.sin(normalizedX * freqFactor) * Math.cos(time + phase) * intensityPixels;
         }
 
         // Add Chaos
-        const chaosFactor = Math.sin(time * 2 + normalizedX * 20) * chaos * 50;
+        const chaosFactor = Math.sin(time2 + normalizedX * 20) * chaosAmplitude;
         y += chaosFactor;
 
         if (x === 0) ctx.moveTo(x, centerY + y);
@@ -86,8 +118,15 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       for (let i = 0; i < particleCount; i++) {
         const px = (time * 100 + i * width / 2) % width;
         const pNormalizedX = px / width;
-        let py = Math.sin(pNormalizedX * Math.PI * 10 * currentFrequency + time + phase) * (currentIntensity * 100);
-        const pChaos = Math.sin(time * 2 + pNormalizedX * 20) * chaos * 50;
+
+        let py = 0;
+        if (mode === 'Traveling') {
+            py = Math.sin(pNormalizedX * freqFactor + time + phase) * intensityPixels;
+        } else {
+            py = Math.sin(pNormalizedX * freqFactor) * Math.cos(time + phase) * intensityPixels;
+        }
+
+        const pChaos = Math.sin(time2 + pNormalizedX * 20) * chaosAmplitude;
         py += pChaos;
 
         ctx.fillStyle = colors[i % colors.length];
@@ -125,7 +164,7 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       // UI Text
       ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx.font = '10px monospace';
-      ctx.fillText(`Phase: ${waveState.phase.toFixed(2)} rad`, dialX - 40, dialY + dialRadius + 20);
+      ctx.fillText(`Phase: ${stateRef.current.phase.toFixed(2)} rad`, dialX - 40, dialY + dialRadius + 20);
 
       time += 0.05;
       animationId = requestAnimationFrame(draw);
@@ -137,7 +176,7 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       cancelAnimationFrame(animationId);
       window.removeEventListener('resize', resize);
     };
-  }, [waveState]);
+  }, []); // Empty dependency array ensures this effect only runs once
 
   return (
     <canvas
