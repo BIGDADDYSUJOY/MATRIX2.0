@@ -1,0 +1,3 @@
+## 2024-05-22 - Ref-Bridge for High-Frequency Canvas Updates
+**Learning:** In React applications with Canvas animation loops, passing state directly to a `useEffect` that manages the loop causes the animation to tear down and restart on every state update. This results in visual stutter (as `time` constants reset) and high CPU overhead from repeated setup/teardown.
+**Action:** Use a `useRef` bridge to sync React state to the animation loop. This allows the loop to run indefinitely on mount while always having access to the latest state values without interrupting the `requestAnimationFrame` cycle.
