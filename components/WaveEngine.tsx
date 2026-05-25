@@ -8,49 +8,75 @@ interface WaveEngineProps {
 
 const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const stateRef = useRef(waveState);
+
+  // ⚡ Bolt: Sync ref with prop changes to prevent expensive effect re-runs and animation resets
+  useEffect(() => {
+    stateRef.current = waveState;
+  }, [waveState]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    // ⚡ Bolt: Optimization - Use opaque background to improve compositor performance
+    const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
     let animationId: number;
     let time = 0;
 
+    // ⚡ Bolt: Cache dimensions to avoid expensive getBoundingClientRect in the draw loop
+    let width = 0;
+    let height = 0;
+
     const resize = () => {
-      canvas.width = canvas.parentElement?.clientWidth || 800;
-      canvas.height = canvas.parentElement?.clientHeight || 300;
+      // ⚡ Bolt: HiDPI support for razor-sharp rendering
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.parentElement?.getBoundingClientRect();
+      width = rect?.width || 800;
+      height = rect?.height || 300;
+
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
     };
 
     window.addEventListener('resize', resize);
     resize();
 
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // ⚡ Bolt: Optimization - fillRect is faster than clearRect on some GPUs when alpha is false
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, width, height);
 
-      const { targetFrequency, targetIntensity, chaos, phase, mode } = waveState;
-      const currentFrequency = targetFrequency; // Smooth transition could be added later
+      const { targetFrequency, targetIntensity, chaos, phase, mode } = stateRef.current;
+      const currentFrequency = targetFrequency;
       const currentIntensity = targetIntensity;
-      const centerY = canvas.height / 2;
-      const width = canvas.width;
+      const centerY = height / 2;
 
-      // Draw Grid
+      // ⚡ Bolt: Hoist invariants and pre-calculate factors to avoid per-pixel divisions and redundant math
+      const invWidth = 1 / width;
+      const freqFactor = Math.PI * 10 * currentFrequency;
+      const ampFactor = currentIntensity * 100;
+      const chaosFactorBase = chaos * 50;
+      const time2 = time * 2;
+      const cosFactor = mode === 'Standing' ? Math.cos(time + phase) : 1;
+
+      // ⚡ Bolt: Optimization - Batch Grid Drawing into a single path to reduce draw calls
       ctx.strokeStyle = 'rgba(59, 130, 246, 0.05)';
       ctx.lineWidth = 1;
+      ctx.beginPath();
       const gridSize = 40;
       for (let x = 0; x < width; x += gridSize) {
-        ctx.beginPath();
         ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-        ctx.stroke();
+        ctx.lineTo(x, height);
       }
-      for (let y = 0; y < canvas.height; y += gridSize) {
-        ctx.beginPath();
+      for (let y = 0; y < height; y += gridSize) {
         ctx.moveTo(0, y);
         ctx.lineTo(width, y);
-        ctx.stroke();
       }
+      ctx.stroke();
 
       // Draw Wave
       ctx.beginPath();
@@ -60,19 +86,16 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       ctx.shadowColor = 'rgba(59, 130, 246, 0.5)';
 
       for (let x = 0; x < width; x++) {
-        const normalizedX = x / width;
+        const normalizedX = x * invWidth;
         let y = 0;
 
         if (mode === 'Traveling') {
-          y = Math.sin(normalizedX * Math.PI * 10 * currentFrequency + time + phase) * (currentIntensity * 100);
+          y = Math.sin(normalizedX * freqFactor + time + phase) * ampFactor;
         } else {
-          // Standing Wave
-          y = Math.sin(normalizedX * Math.PI * 10 * currentFrequency) * Math.cos(time + phase) * (currentIntensity * 100);
+          y = Math.sin(normalizedX * freqFactor) * cosFactor * ampFactor;
         }
 
-        // Add Chaos
-        const chaosFactor = Math.sin(time * 2 + normalizedX * 20) * chaos * 50;
-        y += chaosFactor;
+        y += Math.sin(time2 + normalizedX * 20) * chaosFactorBase;
 
         if (x === 0) ctx.moveTo(x, centerY + y);
         else ctx.lineTo(x, centerY + y);
@@ -85,16 +108,16 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       const colors = ['#ef4444', '#22c55e'];
       for (let i = 0; i < particleCount; i++) {
         const px = (time * 100 + i * width / 2) % width;
-        const pNormalizedX = px / width;
-        let py = Math.sin(pNormalizedX * Math.PI * 10 * currentFrequency + time + phase) * (currentIntensity * 100);
-        const pChaos = Math.sin(time * 2 + pNormalizedX * 20) * chaos * 50;
-        py += pChaos;
+        const pNormalizedX = px * invWidth;
+
+        // Particles always use traveling formula as per original design
+        let py = Math.sin(pNormalizedX * freqFactor + time + phase) * ampFactor;
+        py += Math.sin(time2 + pNormalizedX * 20) * chaosFactorBase;
 
         ctx.fillStyle = colors[i % colors.length];
         ctx.beginPath();
         ctx.arc(px, centerY + py, 4, 0, Math.PI * 2);
         ctx.fill();
-        // Glow
         ctx.shadowBlur = 10;
         ctx.shadowColor = colors[i % colors.length];
         ctx.stroke();
@@ -125,7 +148,7 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       // UI Text
       ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx.font = '10px monospace';
-      ctx.fillText(`Phase: ${waveState.phase.toFixed(2)} rad`, dialX - 40, dialY + dialRadius + 20);
+      ctx.fillText(`Phase: ${phase.toFixed(2)} rad`, dialX - 40, dialY + dialRadius + 20);
 
       time += 0.05;
       animationId = requestAnimationFrame(draw);
@@ -137,7 +160,7 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       cancelAnimationFrame(animationId);
       window.removeEventListener('resize', resize);
     };
-  }, [waveState]);
+  }, []);
 
   return (
     <canvas
