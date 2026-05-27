@@ -8,97 +8,133 @@ interface WaveEngineProps {
 
 const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const stateRef = useRef(waveState);
+  const dimensionsRef = useRef({ width: 800, height: 300, dpr: 1 });
+
+  // Keep stateRef updated without restarting the animation loop
+  useEffect(() => {
+    stateRef.current = waveState;
+  }, [waveState]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+
+    // Performance: Initialize without alpha as we have a solid black background
+    const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
     let animationId: number;
     let time = 0;
 
     const resize = () => {
-      canvas.width = canvas.parentElement?.clientWidth || 800;
-      canvas.height = canvas.parentElement?.clientHeight || 300;
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.parentElement?.getBoundingClientRect();
+      const width = rect?.width || 800;
+      const height = rect?.height || 300;
+
+      dimensionsRef.current = { width, height, dpr };
+
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+
+      // Reset transform before scaling to avoid cumulative scaling
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
     };
 
     window.addEventListener('resize', resize);
     resize();
 
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const { width, height } = dimensionsRef.current;
 
-      const { targetFrequency, targetIntensity, chaos, phase, mode } = waveState;
-      const currentFrequency = targetFrequency; // Smooth transition could be added later
+      // Performance: use fillRect instead of clearRect for opaque contexts
+      // This is faster for the compositor when alpha is disabled.
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, width, height);
+
+      const { targetFrequency, targetIntensity, chaos, phase, mode } = stateRef.current;
+      const currentFrequency = targetFrequency;
       const currentIntensity = targetIntensity;
-      const centerY = canvas.height / 2;
-      const width = canvas.width;
+      const centerY = height / 2;
 
-      // Draw Grid
+      // Optimization: Hoist invariant calculations out of loops to replace division with multiplication
+      const invWidth = 1 / width;
+      const freqFactor = Math.PI * 10 * currentFrequency;
+      const ampFactor = currentIntensity * 100;
+      const chaosFactorBase = chaos * 50;
+      const cosFactor = Math.cos(time + phase);
+
+      // Draw Grid - Optimization: Batch all lines into a single path to reduce draw calls
       ctx.strokeStyle = 'rgba(59, 130, 246, 0.05)';
       ctx.lineWidth = 1;
       const gridSize = 40;
+      ctx.beginPath();
       for (let x = 0; x < width; x += gridSize) {
-        ctx.beginPath();
         ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-        ctx.stroke();
+        ctx.lineTo(x, height);
       }
-      for (let y = 0; y < canvas.height; y += gridSize) {
-        ctx.beginPath();
+      for (let y = 0; y < height; y += gridSize) {
         ctx.moveTo(0, y);
         ctx.lineTo(width, y);
-        ctx.stroke();
       }
+      ctx.stroke();
 
       // Draw Wave
       ctx.beginPath();
       ctx.strokeStyle = '#3b82f6';
       ctx.lineWidth = 2;
+
+      // Performance: Shadows are expensive. Applying them selectively.
       ctx.shadowBlur = 15;
       ctx.shadowColor = 'rgba(59, 130, 246, 0.5)';
 
       for (let x = 0; x < width; x++) {
-        const normalizedX = x / width;
+        const normalizedX = x * invWidth;
         let y = 0;
 
         if (mode === 'Traveling') {
-          y = Math.sin(normalizedX * Math.PI * 10 * currentFrequency + time + phase) * (currentIntensity * 100);
+          y = Math.sin(normalizedX * freqFactor + time + phase) * ampFactor;
         } else {
           // Standing Wave
-          y = Math.sin(normalizedX * Math.PI * 10 * currentFrequency) * Math.cos(time + phase) * (currentIntensity * 100);
+          y = Math.sin(normalizedX * freqFactor) * cosFactor * ampFactor;
         }
 
         // Add Chaos
-        const chaosFactor = Math.sin(time * 2 + normalizedX * 20) * chaos * 50;
+        const chaosFactor = Math.sin(time * 2 + normalizedX * 20) * chaosFactorBase;
         y += chaosFactor;
 
         if (x === 0) ctx.moveTo(x, centerY + y);
         else ctx.lineTo(x, centerY + y);
       }
       ctx.stroke();
+
+      // Performance: Reset shadow immediately to prevent state leak
       ctx.shadowBlur = 0;
+      ctx.shadowColor = 'transparent';
 
       // Draw Particles (Consciousness Particles)
       const particleCount = 2;
       const colors = ['#ef4444', '#22c55e'];
       for (let i = 0; i < particleCount; i++) {
         const px = (time * 100 + i * width / 2) % width;
-        const pNormalizedX = px / width;
-        let py = Math.sin(pNormalizedX * Math.PI * 10 * currentFrequency + time + phase) * (currentIntensity * 100);
-        const pChaos = Math.sin(time * 2 + pNormalizedX * 20) * chaos * 50;
+        const pNormalizedX = px * invWidth;
+        let py = Math.sin(pNormalizedX * freqFactor + time + phase) * ampFactor;
+        const pChaos = Math.sin(time * 2 + pNormalizedX * 20) * chaosFactorBase;
         py += pChaos;
 
         ctx.fillStyle = colors[i % colors.length];
         ctx.beginPath();
         ctx.arc(px, centerY + py, 4, 0, Math.PI * 2);
         ctx.fill();
-        // Glow
+
+        // Glow - Performance: Reset shadow after use
         ctx.shadowBlur = 10;
         ctx.shadowColor = colors[i % colors.length];
         ctx.stroke();
         ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
       }
 
       // Draw Phase Dial (Top Right)
@@ -107,6 +143,7 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       const dialRadius = 30;
 
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.arc(dialX, dialY, dialRadius, 0, Math.PI * 2);
       ctx.stroke();
@@ -125,7 +162,7 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       // UI Text
       ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx.font = '10px monospace';
-      ctx.fillText(`Phase: ${waveState.phase.toFixed(2)} rad`, dialX - 40, dialY + dialRadius + 20);
+      ctx.fillText(`Phase: ${stateRef.current.phase.toFixed(2)} rad`, dialX - 40, dialY + dialRadius + 20);
 
       time += 0.05;
       animationId = requestAnimationFrame(draw);
@@ -137,7 +174,7 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       cancelAnimationFrame(animationId);
       window.removeEventListener('resize', resize);
     };
-  }, [waveState]);
+  }, []); // Performance: Animation loop remains stable
 
   return (
     <canvas
