@@ -60,6 +60,10 @@ const App: React.FC = () => {
   const [nodes] = useState<SupplyChainNode[]>(INITIAL_NODES);
   const [decodeReports, setDecodeReports] = useState<Record<string, DecodeReport>>({});
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+  const handleNodeClick = React.useCallback((id: string) => {
+    setSelectedNodeId(id);
+  }, []);
   
   // SHUNYA Wave State
   const [waveState, setWaveState] = useState<WaveState>({
@@ -97,9 +101,9 @@ const App: React.FC = () => {
     nodes.find(n => n.id === selectedNodeId) || null,
   [nodes, selectedNodeId]);
 
-  const handleDecodeComplete = (report: DecodeReport) => {
+  const handleDecodeComplete = React.useCallback((report: DecodeReport) => {
     setDecodeReports(prev => ({ ...prev, [report.node_id]: report }));
-  };
+  }, []);
 
   // Keyboard controls for wave state
   useEffect(() => {
@@ -249,14 +253,17 @@ const App: React.FC = () => {
 
       <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[400px]">
         {filteredNodes.length > 0 ? (
-          filteredNodes.map((node) => (
-            <AuditCard 
-              key={node.id}
-              agent={node}
-              status={decodeReports[node.id]?.status || 'PENDING'}
-              onClick={() => setSelectedNodeId(node.id)}
-            />
-          ))
+          filteredNodes.map((node) => {
+            const status = decodeReports[node.id]?.status || 'PENDING';
+            return (
+              <AuditItem
+                key={node.id}
+                node={node}
+                status={status}
+                onClick={handleNodeClick}
+              />
+            );
+          })
         ) : (
           <div className="col-span-full flex flex-col items-center justify-center text-gray-700 py-20">
             <p className="font-mono text-xs uppercase tracking-widest italic opacity-50">Zero patterns detected in current coordinate search.</p>
@@ -288,5 +295,19 @@ const App: React.FC = () => {
     </div>
   );
 };
+
+const AuditItem: React.FC<{
+  node: SupplyChainNode,
+  status: DecodeStatus | 'PENDING',
+  onClick: (id: string) => void
+}> = React.memo(({ node, status, onClick }) => {
+  return (
+    <AuditCard
+      agent={node}
+      status={status}
+      onClick={() => onClick(node.id)}
+    />
+  );
+});
 
 export default App;
