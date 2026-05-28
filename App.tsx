@@ -101,6 +101,10 @@ const App: React.FC = () => {
     setDecodeReports(prev => ({ ...prev, [report.node_id]: report }));
   };
 
+  const handleSelectNode = React.useCallback((id: string) => {
+    setSelectedNodeId(id);
+  }, []);
+
   // Keyboard controls for wave state
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -254,7 +258,7 @@ const App: React.FC = () => {
               key={node.id}
               agent={node}
               status={decodeReports[node.id]?.status || 'PENDING'}
-              onClick={() => setSelectedNodeId(node.id)}
+              onSelect={handleSelectNode}
             />
           ))
         ) : (
