@@ -3,14 +3,14 @@ import React, { useState } from 'react';
 import { SupplyChainNode, DecodeReport, DecodeStatus } from '../types';
 import { auditAgent } from '../services/geminiService';
 
-interface AuditDetailProps {
+interface DecodeDetailProps {
   agent: SupplyChainNode;
   report: DecodeReport | null;
   onAuditComplete: (report: DecodeReport) => void;
   onClose: () => void;
 }
 
-const AuditDetail: React.FC<AuditDetailProps> = ({ agent, report, onAuditComplete, onClose }) => {
+const DecodeDetail: React.FC<DecodeDetailProps> = ({ agent, report, onAuditComplete, onClose }) => {
   const [isDecoding, setIsDecoding] = useState(false);
 
   const handleStartDecode = async () => {
@@ -91,10 +91,22 @@ const AuditDetail: React.FC<AuditDetailProps> = ({ agent, report, onAuditComplet
           </section>
 
           {report ? (
-            <section className="animate-in slide-in-from-bottom-4 duration-700 space-y-8">
+            <section className="animate-in slide-in-from-bottom-4 duration-700 space-y-8 pb-12">
               <div className="flex items-center gap-4">
                 <h3 className="text-[10px] uppercase tracking-[0.3em] text-blue-500/60 font-black">Deep Decode Results</h3>
                 <div className="h-px flex-1 bg-gradient-to-r from-blue-500/20 to-transparent"></div>
+              </div>
+
+              {/* Maquation Section */}
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl blur opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                <div className="relative bg-black p-8 rounded-3xl border border-white/10 flex flex-col items-center text-center">
+                    <p className="text-[10px] font-black text-blue-500 tracking-[0.5em] uppercase mb-6">Opposite of Equation: Maquation</p>
+                    <div className="text-4xl md:text-5xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-white via-blue-100 to-blue-500 mb-4 animate-pulse-slow">
+                        {report.maquation}
+                    </div>
+                    <p className="text-xs font-mono text-gray-500 uppercase tracking-widest italic">Signal Purified through Shunya</p>
+                </div>
               </div>
 
               <div className={`p-8 rounded-3xl border ${report.status === DecodeStatus.SYNCHRONIZED ? 'bg-blue-500/5 border-blue-500/20 shadow-[0_0_50px_-12px_rgba(59,130,246,0.3)]' : 'bg-red-500/5 border-red-500/20'}`}>
@@ -192,4 +204,4 @@ const AuditDetail: React.FC<AuditDetailProps> = ({ agent, report, onAuditComplet
   );
 };
 
-export default AuditDetail;
+export default DecodeDetail;

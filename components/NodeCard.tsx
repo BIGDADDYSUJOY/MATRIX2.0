@@ -2,13 +2,13 @@
 import React from 'react';
 import { SupplyChainNode, DecodeStatus } from '../types';
 
-interface AuditCardProps {
+interface NodeCardProps {
   agent: SupplyChainNode;
   onClick: () => void;
   status: DecodeStatus | 'PENDING';
 }
 
-const AuditCard: React.FC<AuditCardProps> = ({ agent, onClick, status }) => {
+const NodeCard: React.FC<NodeCardProps> = ({ agent, onClick, status }) => {
   const statusColors = {
     ['PENDING']: 'bg-zinc-900/50 text-zinc-500 border-white/5',
     [DecodeStatus.SYNCHRONIZED]: 'bg-blue-900/10 text-blue-400 border-blue-500/30 glow-blue',
@@ -18,7 +18,7 @@ const AuditCard: React.FC<AuditCardProps> = ({ agent, onClick, status }) => {
   };
 
   return (
-    <div 
+    <div
       onClick={onClick}
       className={`glass p-6 rounded-2xl border transition-all cursor-pointer hover:border-white/20 group relative overflow-hidden ${statusColors[status]}`}
     >
@@ -70,4 +70,4 @@ const AuditCard: React.FC<AuditCardProps> = ({ agent, onClick, status }) => {
   );
 };
 
-export default AuditCard;
+export default NodeCard;

@@ -25,6 +25,7 @@ export interface DecodeReport {
   node_id: string;
   status: DecodeStatus;
   reasoning: string;
+  maquation: string; // The Opposite of Equation: You + Me = Why now?
   frequency_analysis: string;
   intensity_analysis: string;
   chaos_analysis: string;
