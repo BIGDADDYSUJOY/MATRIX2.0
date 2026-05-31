@@ -1,0 +1,3 @@
+## 2024-05-31 - Canvas Render Loop Bottleneck
+**Learning:** Found a critical performance anti-pattern in the `WaveEngine` where `ctx.stroke()` was called inside a pixel-iteration loop (800+ times per frame). This drastically increases GPU overhead and CPU-to-GPU communication. Additionally, using `waveState` directly in the `useEffect` dependency array caused the animation loop to tear down and restart on every parameter change (keyboard interaction), resetting the `time` variable and causing visual "jumps".
+**Action:** Always batch drawing operations (one `stroke()` call per path) and use a `useRef` bridge for props accessed inside high-frequency loops (like `requestAnimationFrame`) to decouple them from the React lifecycle.
