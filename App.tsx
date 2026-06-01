@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { SupplyChainNode, DecodeReport, DecodeStatus, WaveState } from './types';
 import AuditCard from './components/AuditCard';
 import AuditDetail from './components/AuditDetail';
@@ -97,9 +97,13 @@ const App: React.FC = () => {
     nodes.find(n => n.id === selectedNodeId) || null,
   [nodes, selectedNodeId]);
 
-  const handleDecodeComplete = (report: DecodeReport) => {
+  const handleDecodeComplete = useCallback((report: DecodeReport) => {
     setDecodeReports(prev => ({ ...prev, [report.node_id]: report }));
-  };
+  }, []);
+
+  const handleNodeSelect = useCallback((id: string) => {
+    setSelectedNodeId(id);
+  }, []);
 
   // Keyboard controls for wave state
   useEffect(() => {
@@ -254,7 +258,8 @@ const App: React.FC = () => {
               key={node.id}
               agent={node}
               status={decodeReports[node.id]?.status || 'PENDING'}
-              onClick={() => setSelectedNodeId(node.id)}
+              onClick={handleNodeSelect}
+              nodeId={node.id}
             />
           ))
         ) : (
