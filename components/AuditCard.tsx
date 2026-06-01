@@ -4,11 +4,12 @@ import { SupplyChainNode, DecodeStatus } from '../types';
 
 interface AuditCardProps {
   agent: SupplyChainNode;
-  onClick: () => void;
+  onClick: (id: string) => void;
   status: DecodeStatus | 'PENDING';
+  nodeId: string;
 }
 
-const AuditCard: React.FC<AuditCardProps> = ({ agent, onClick, status }) => {
+const AuditCard: React.FC<AuditCardProps> = React.memo(({ agent, onClick, status, nodeId }) => {
   const statusColors = {
     ['PENDING']: 'bg-zinc-900/50 text-zinc-500 border-white/5',
     [DecodeStatus.SYNCHRONIZED]: 'bg-blue-900/10 text-blue-400 border-blue-500/30 glow-blue',
@@ -19,7 +20,7 @@ const AuditCard: React.FC<AuditCardProps> = ({ agent, onClick, status }) => {
 
   return (
     <div 
-      onClick={onClick}
+      onClick={() => onClick(nodeId)}
       className={`glass p-6 rounded-2xl border transition-all cursor-pointer hover:border-white/20 group relative overflow-hidden ${statusColors[status]}`}
     >
       <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-30 transition-opacity">
@@ -68,6 +69,6 @@ const AuditCard: React.FC<AuditCardProps> = ({ agent, onClick, status }) => {
       </div>
     </div>
   );
-};
+});
 
 export default AuditCard;
