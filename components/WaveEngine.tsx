@@ -8,11 +8,18 @@ interface WaveEngineProps {
 
 const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const waveStateRef = useRef(waveState);
+
+  // Sync ref with props to allow the animation loop to access latest state without restarting
+  useEffect(() => {
+    waveStateRef.current = waveState;
+  }, [waveState]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    // Set alpha to false for better performance as background is solid
+    const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
     let animationId: number;
@@ -27,30 +34,30 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
     resize();
 
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Use fillRect instead of clearRect for better performance on non-alpha contexts
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const { targetFrequency, targetIntensity, chaos, phase, mode } = waveState;
-      const currentFrequency = targetFrequency; // Smooth transition could be added later
+      const { targetFrequency, targetIntensity, chaos, phase, mode } = waveStateRef.current;
+      const currentFrequency = targetFrequency;
       const currentIntensity = targetIntensity;
       const centerY = canvas.height / 2;
       const width = canvas.width;
 
-      // Draw Grid
+      // Draw Grid - Batched into a single path for performance
+      ctx.beginPath();
       ctx.strokeStyle = 'rgba(59, 130, 246, 0.05)';
       ctx.lineWidth = 1;
       const gridSize = 40;
       for (let x = 0; x < width; x += gridSize) {
-        ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, canvas.height);
-        ctx.stroke();
       }
       for (let y = 0; y < canvas.height; y += gridSize) {
-        ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(width, y);
-        ctx.stroke();
       }
+      ctx.stroke();
 
       // Draw Wave
       ctx.beginPath();
@@ -59,19 +66,27 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       ctx.shadowBlur = 15;
       ctx.shadowColor = 'rgba(59, 130, 246, 0.5)';
 
+      // Bolt Optimization: Hoist invariant calculations out of the pixel loop
+      const freqFactor = (Math.PI * 10 * currentFrequency) / width;
+      const ampFactor = currentIntensity * 100;
+      const chaosFactorBase = chaos * 50;
+      const timePhase = time + phase;
+      const chaosStepFactor = 20 / width;
+      const cosTimePhase = Math.cos(timePhase);
+
       for (let x = 0; x < width; x++) {
-        const normalizedX = x / width;
         let y = 0;
+        const angle = x * freqFactor;
 
         if (mode === 'Traveling') {
-          y = Math.sin(normalizedX * Math.PI * 10 * currentFrequency + time + phase) * (currentIntensity * 100);
+          y = Math.sin(angle + timePhase) * ampFactor;
         } else {
           // Standing Wave
-          y = Math.sin(normalizedX * Math.PI * 10 * currentFrequency) * Math.cos(time + phase) * (currentIntensity * 100);
+          y = Math.sin(angle) * cosTimePhase * ampFactor;
         }
 
-        // Add Chaos
-        const chaosFactor = Math.sin(time * 2 + normalizedX * 20) * chaos * 50;
+        // Add Chaos - Hoisted normalized calculation
+        const chaosFactor = Math.sin(time * 2 + x * chaosStepFactor) * chaosFactorBase;
         y += chaosFactor;
 
         if (x === 0) ctx.moveTo(x, centerY + y);
@@ -83,11 +98,12 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       // Draw Particles (Consciousness Particles)
       const particleCount = 2;
       const colors = ['#ef4444', '#22c55e'];
+      const invWidth = 1 / width;
       for (let i = 0; i < particleCount; i++) {
-        const px = (time * 100 + i * width / 2) % width;
-        const pNormalizedX = px / width;
-        let py = Math.sin(pNormalizedX * Math.PI * 10 * currentFrequency + time + phase) * (currentIntensity * 100);
-        const pChaos = Math.sin(time * 2 + pNormalizedX * 20) * chaos * 50;
+        const px = (time * 100 + i * width * 0.5) % width;
+        const pNormalizedX = px * invWidth;
+        let py = Math.sin(pNormalizedX * Math.PI * 10 * currentFrequency + timePhase) * ampFactor;
+        const pChaos = Math.sin(time * 2 + pNormalizedX * 20) * chaosFactorBase;
         py += pChaos;
 
         ctx.fillStyle = colors[i % colors.length];
@@ -125,7 +141,7 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       // UI Text
       ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx.font = '10px monospace';
-      ctx.fillText(`Phase: ${waveState.phase.toFixed(2)} rad`, dialX - 40, dialY + dialRadius + 20);
+      ctx.fillText(`Phase: ${waveStateRef.current.phase.toFixed(2)} rad`, dialX - 40, dialY + dialRadius + 20);
 
       time += 0.05;
       animationId = requestAnimationFrame(draw);
@@ -137,7 +153,7 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       cancelAnimationFrame(animationId);
       window.removeEventListener('resize', resize);
     };
-  }, [waveState]);
+  }, []); // Empty dependency array means loop only starts once
 
   return (
     <canvas
