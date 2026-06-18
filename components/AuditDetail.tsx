@@ -10,7 +10,7 @@ interface AuditDetailProps {
   onClose: () => void;
 }
 
-const AuditDetail: React.FC<AuditDetailProps> = ({ agent, report, onAuditComplete, onClose }) => {
+const AuditDetail: React.FC<AuditDetailProps> = React.memo(({ agent, report, onAuditComplete, onClose }) => {
   const [isDecoding, setIsDecoding] = useState(false);
 
   const handleStartDecode = async () => {
@@ -190,6 +190,6 @@ const AuditDetail: React.FC<AuditDetailProps> = ({ agent, report, onAuditComplet
       </div>
     </div>
   );
-};
+});
 
 export default AuditDetail;

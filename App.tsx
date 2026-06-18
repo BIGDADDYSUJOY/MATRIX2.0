@@ -101,6 +101,10 @@ const App: React.FC = () => {
     setSelectedNodeId(id);
   }, []);
 
+  const handleCloseDetail = useCallback(() => {
+    setSelectedNodeId(null);
+  }, []);
+
   const handleDecodeComplete = useCallback((report: DecodeReport) => {
     setDecodeReports(prev => ({ ...prev, [report.node_id]: report }));
   }, []);
@@ -274,7 +278,7 @@ const App: React.FC = () => {
           agent={selectedNode}
           report={decodeReports[selectedNode.id] || null}
           onAuditComplete={handleDecodeComplete}
-          onClose={() => setSelectedNodeId(null)}
+          onClose={handleCloseDetail}
         />
       )}
 
