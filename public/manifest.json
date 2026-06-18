@@ -1,0 +1,17 @@
+{
+  "name": "SHUNYA MAGNATION AI | Matrix Decoder",
+  "short_name": "Shunya Matrix",
+  "description": "Deep Decode the Global Supply Chain through the Frequency–Intensity–Chaos framework.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2103/2103633.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
