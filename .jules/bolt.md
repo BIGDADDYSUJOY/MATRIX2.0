@@ -1,0 +1,3 @@
+## 2024-05-20 - Decoupling Animation Loops from React Lifecycle
+**Learning:** In high-frequency rendering components like WaveEngine, re-triggering the animation effect on every prop change causes frame drops and jank. Using a useRef bridge allows the loop to run at 60fps while staying synchronized with state updates without effect re-initialization. Additionally, batching Canvas draw calls (beginPath/stroke) and hoisting math constants out of pixel loops significantly reduces CPU overhead.
+**Action:** Use the useRef bridge pattern for all future Canvas-based animation loops and always audit for redundant stroke() calls in per-frame rendering.
