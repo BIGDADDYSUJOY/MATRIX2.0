@@ -148,6 +148,16 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       ctx.font = '10px monospace';
       ctx.fillText(`Phase: ${waveState.phase.toFixed(2)} rad`, dialX - 40, dialY + dialRadius + 20);
 
+      // Metabolic Pulse Visualizer (Bottom Right)
+      const metabolicPulse = Math.abs(Math.sin(time * 0.5));
+      ctx.fillStyle = `rgba(59, 130, 246, ${0.1 + metabolicPulse * 0.2})`;
+      ctx.beginPath();
+      ctx.arc(width - 40, canvas.height - 40, 5 + metabolicPulse * 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = '900 8px sans-serif';
+      ctx.fillStyle = 'rgba(59, 130, 246, 0.5)';
+      ctx.fillText('HUNGER', width - 60, canvas.height - 60);
+
       time += 0.05;
       animationId = requestAnimationFrame(draw);
     };

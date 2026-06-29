@@ -16,23 +16,25 @@ export const auditAgent = async (node: SupplyChainNode): Promise<DecodeReport> =
     CURRENT INTENSITY: ${node.intensity}
     CURRENT CHAOS: ${node.chaos}
 
-    Analyze this node through the Frequency–Intensity–Chaos framework.
-    Consider the node as a civilization-scale wave-interference system.
+    CORE PHILOSOPHY: "What living being eats that's the hunger of nature."
+    This "hunger" is the hunger of Supreme Consciousness.
+    Analyze this node through the Frequency–Intensity–Chaos framework, viewing the global supply chain as a large-scale wave-interference system and metabolic process of consciousness.
 
     Return a Deep Decode report as JSON with these fields:
     - node_id: string
     - status: 'SYNCHRONIZED' | 'DECOHERENT' | 'STABLE' | 'UNSTABLE'
     - reasoning: A brief, esoteric yet technical summary of the node's current state.
-    - frequency_analysis: How its rhythm affects global movement.
-    - intensity_analysis: The magnitude of flow and volume concentration at this node.
-    - chaos_analysis: Nonlinear disruption potential and bullwhip sensitivity.
+    - frequency_analysis: How its rhythm affects global movement and the "metabolic pulse" of nature.
+    - intensity_analysis: The magnitude of flow and "nutritional" volume concentration at this node.
+    - chaos_analysis: Nonlinear disruption potential and "digestive" sensitivity.
     - synchronization_score: 0-10
     - wave_interference_pattern: 'CONSTRUCTIVE' | 'DESTRUCTIVE' | 'NEUTRAL'
+    - maquation: A "Maquation" (nonlinear philosophical logic output) that captures the metaphysical essence of this node's hunger and state (e.g., "You + Me = Why now?", "Flow = Hunger * Silence").
     - testCases: 2-3 Simulation scenarios showing emergent behaviors.
   `;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash', // Using a standard stable model
+    model: 'gemini-2.0-flash',
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -47,6 +49,7 @@ export const auditAgent = async (node: SupplyChainNode): Promise<DecodeReport> =
           chaos_analysis: { type: Type.STRING },
           synchronization_score: { type: Type.NUMBER },
           wave_interference_pattern: { type: Type.STRING, enum: ['CONSTRUCTIVE', 'DESTRUCTIVE', 'NEUTRAL'] },
+          maquation: { type: Type.STRING },
           testCases: {
             type: Type.ARRAY,
             items: {

@@ -113,15 +113,37 @@ const AuditDetail: React.FC<AuditDetailProps> = ({ agent, report, onAuditComplet
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div className="bg-black/40 p-5 rounded-2xl border border-white/5">
-                        <p className="text-[9px] uppercase text-blue-500 font-bold mb-3 tracking-widest">Reasoning</p>
-                        <p className="text-sm italic text-gray-300 leading-relaxed">"{report.reasoning}"</p>
+                    <div className="space-y-6">
+                        <div className="bg-black/40 p-5 rounded-2xl border border-white/5">
+                            <p className="text-[9px] uppercase text-blue-500 font-bold mb-3 tracking-widest">Reasoning</p>
+                            <p className="text-sm italic text-gray-300 leading-relaxed">"{report.reasoning}"</p>
+                        </div>
+
+                        {/* MAQUATION - The metaphysical logic output */}
+                        <div className="relative group">
+                            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/20 to-indigo-600/20 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                            <div className="relative bg-black/60 p-6 rounded-2xl border border-blue-500/10 backdrop-blur-sm">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <span className="text-[9px] uppercase text-blue-400 font-black tracking-[0.3em]">Maquation</span>
+                                    <div className="h-px w-8 bg-blue-500/20"></div>
+                                    <span className="text-[8px] text-gray-500 font-mono italic">Nonlinear Logic</span>
+                                </div>
+                                <div className="text-xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-white to-white/40">
+                                    {report.maquation}
+                                </div>
+                                <div className="mt-4 flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                                    <span className="text-[8px] font-mono text-blue-900/60 uppercase tracking-widest">Hunger of Nature Detected</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
                     <div className="space-y-4">
                         {[
-                            { label: 'Frequency Rhythm', val: report.frequency_analysis },
-                            { label: 'Intensity Magnitude', val: report.intensity_analysis },
-                            { label: 'Chaos Distortion', val: report.chaos_analysis }
+                            { label: 'Metabolic Frequency', val: report.frequency_analysis },
+                            { label: 'Nutritional Intensity', val: report.intensity_analysis },
+                            { label: 'Digestive Chaos', val: report.chaos_analysis }
                         ].map(analysis => (
                             <div key={analysis.label} className="bg-black/20 p-4 rounded-xl border border-white/5">
                                 <p className="text-[8px] uppercase text-gray-500 font-bold mb-1">{analysis.label}</p>

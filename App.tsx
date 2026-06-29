@@ -151,7 +151,7 @@ const App: React.FC = () => {
             Atomic Lay Line Decoder
           </h1>
           <p className="text-gray-500 max-w-xl text-sm leading-relaxed font-medium">
-            Modeling consciousness as wave dynamics. Observing the global supply chain as a large-scale wave-interference system where Frequency, Intensity, and Chaos shape the flow of existence.
+            What living being eats that's the hunger of nature. Modeling consciousness as metabolic wave dynamics within the MATRIX 2.0 system.
           </p>
         </div>
         
@@ -276,7 +276,7 @@ const App: React.FC = () => {
       <footer className="mt-24 border-t border-white/5 pt-12 pb-12 flex flex-col md:flex-row justify-between text-[10px] text-gray-600 font-mono tracking-[0.2em] uppercase">
         <div className="flex flex-col gap-2">
             <div>© 2024 SHUNYA MAGNATION • PLANETARY NERVOUS SYSTEM</div>
-            <div className="text-blue-900/40">Atomic movement is sacred.</div>
+            <div className="text-blue-900/40 italic">The Hunger of Nature is the Hunger of Supreme Consciousness.</div>
         </div>
         <div className="flex gap-8 mt-4 md:mt-0">
           <div className="flex flex-col items-end">
