@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { SupplyChainNode, DecodeReport, DecodeStatus, WaveState } from './types';
-import AuditCard from './components/AuditCard';
-import AuditDetail from './components/AuditDetail';
+import NodeCard from './components/NodeCard';
+import DecodeDetail from './components/DecodeDetail';
 import WaveEngine from './components/WaveEngine';
 
 const INITIAL_NODES: SupplyChainNode[] = [
@@ -250,7 +250,7 @@ const App: React.FC = () => {
       <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[400px]">
         {filteredNodes.length > 0 ? (
           filteredNodes.map((node) => (
-            <AuditCard 
+            <NodeCard
               key={node.id}
               agent={node}
               status={decodeReports[node.id]?.status || 'PENDING'}
@@ -265,10 +265,10 @@ const App: React.FC = () => {
       </main>
 
       {selectedNode && (
-        <AuditDetail 
+        <DecodeDetail
           agent={selectedNode}
           report={decodeReports[selectedNode.id] || null}
-          onAuditComplete={handleDecodeComplete}
+          onDecodeComplete={handleDecodeComplete}
           onClose={() => setSelectedNodeId(null)}
         />
       )}

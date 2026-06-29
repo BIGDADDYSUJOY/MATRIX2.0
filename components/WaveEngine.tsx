@@ -1,6 +1,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { WaveState } from '../types';
+import { getWaveFactors, calculateWaveY } from '../services/waveSimulation';
 
 interface WaveEngineProps {
   waveState: WaveState;
@@ -67,33 +68,35 @@ const WaveEngine: React.FC<WaveEngineProps> = ({ waveState }) => {
       }
       ctx.stroke();
 
-      // Draw Wave - Optimized with hoisted invariant calculations
+      // Draw Wave - Delegated to Mathematics Layer
       ctx.beginPath();
       ctx.strokeStyle = '#3b82f6';
       ctx.lineWidth = 2;
       ctx.shadowBlur = 15;
       ctx.shadowColor = 'rgba(59, 130, 246, 0.5)';
 
-      const invWidth = 1 / width;
-      const freqFactor = Math.PI * 10 * currentFrequency;
-      const ampFactor = currentIntensity * 100;
-      const chaosFactorBase = chaos * 50;
-      const cosFactor = mode !== 'Traveling' ? Math.cos(time + phase) : 1;
+      const factors = getWaveFactors(
+        width,
+        currentFrequency,
+        currentIntensity,
+        chaos,
+        time,
+        phase,
+        mode
+      );
 
       for (let x = 0; x < width; x++) {
-        const normalizedX = x * invWidth;
-        let y = 0;
-
-        if (mode === 'Traveling') {
-          y = Math.sin(normalizedX * freqFactor + time + phase) * ampFactor;
-        } else {
-          // Standing Wave
-          y = Math.sin(normalizedX * freqFactor) * cosFactor * ampFactor;
-        }
-
-        // Add Chaos
-        const chaosFactor = Math.sin(time * 2 + normalizedX * 20) * chaosFactorBase;
-        y += chaosFactor;
+        const normalizedX = x * factors.invWidth;
+        const y = calculateWaveY(
+          normalizedX,
+          time,
+          phase,
+          factors.freqFactor,
+          factors.ampFactor,
+          factors.chaosFactorBase,
+          factors.cosFactor,
+          factors.isTraveling
+        );
 
         if (x === 0) ctx.moveTo(x, centerY + y);
         else ctx.lineTo(x, centerY + y);

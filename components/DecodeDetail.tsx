@@ -3,14 +3,14 @@ import React, { useState } from 'react';
 import { SupplyChainNode, DecodeReport, DecodeStatus } from '../types';
 import { auditAgent } from '../services/geminiService';
 
-interface AuditDetailProps {
+interface DecodeDetailProps {
   agent: SupplyChainNode;
   report: DecodeReport | null;
-  onAuditComplete: (report: DecodeReport) => void;
+  onDecodeComplete: (report: DecodeReport) => void;
   onClose: () => void;
 }
 
-const AuditDetail: React.FC<AuditDetailProps> = ({ agent, report, onAuditComplete, onClose }) => {
+const DecodeDetail: React.FC<DecodeDetailProps> = ({ agent, report, onDecodeComplete: onAuditComplete, onClose }) => {
   const [isDecoding, setIsDecoding] = useState(false);
 
   const handleStartDecode = async () => {
@@ -192,4 +192,4 @@ const AuditDetail: React.FC<AuditDetailProps> = ({ agent, report, onAuditComplet
   );
 };
 
-export default AuditDetail;
+export default DecodeDetail;
