@@ -30,6 +30,7 @@ export interface DecodeReport {
   chaos_analysis: string;
   synchronization_score: number;
   wave_interference_pattern: 'CONSTRUCTIVE' | 'DESTRUCTIVE' | 'NEUTRAL';
+  maquation: string;
   testCases: SimulationResult[];
 }
 
